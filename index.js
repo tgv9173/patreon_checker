@@ -69,6 +69,7 @@ app.get('/callback', async (req, res) => {
       res.redirect(REDIRECT_URI); // ✅ Redirect to the specified URI
     } else {
       res.status(403).send('❌ Access denied: You are not subscribed to the required tier.');
+      return; // Ensure no further execution
     }
 
   } catch (err) {
