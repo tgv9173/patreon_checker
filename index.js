@@ -7,7 +7,7 @@ const app = express();
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
-const REQUIRED_TIER_ID = process.env.REQUIRED_TIER_ID; // Your Patreon tier ID
+const ALLOWED_TIER_IDS = process.env.ALLOWED_TIER_IDS; // Your Patreon tier ID
 
 app.get('/', (req, res) => {
   res.send('<a href="/login">Login with Patreon</a>');
