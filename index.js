@@ -39,7 +39,7 @@ app.get('/callback', async (req, res) => {
 
     // Fetch identity + memberships
     const userRes = await axios.get(
-      'https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers,memberships&fields%5Bmember%5D=currently_entitled_tiers',
+      'https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers,memberships&fields%5Bmembership%5D=currently_entitled_tiers',
       {
         headers: { Authorization: `Bearer ${accessToken}` }
       }
