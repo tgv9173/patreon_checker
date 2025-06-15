@@ -26,6 +26,7 @@ app.get('/login', (req, res) => {
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
   try {
+    // Exchange code for token
     const tokenRes = await axios.post('https://www.patreon.com/api/oauth2/token', querystring.stringify({
       code,
       grant_type: 'authorization_code',
@@ -36,20 +37,18 @@ app.get('/callback', async (req, res) => {
 
     const accessToken = tokenRes.data.access_token;
 
+    // Fetch user identity + memberships
     const userRes = await axios.get('https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers&fields%5Bmember%5D=currently_entitled_tiers', {
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
     });
 
-    const memberships = userRes.data.included || [];
-    const hasTier = memberships.some(item => item.type === 'tier' && item.id === REQUIRED_TIER_ID);
+    // Dump full JSON for inspection
+    console.log(JSON.stringify(userRes.data, null, 2)); // Log to server
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(userRes.data, null, 2)); // Display in browser
 
-    if (hasTier) {
-      res.redirect(REDIRECT_URI); // Change to your success URL
-    } else {
-      res.send('❌ You are not subscribed to the required tier.');
-    }
   } catch (err) {
     console.error(err.response ? err.response.data : err);
     res.send('⚠️ An error occurred during authentication.');
