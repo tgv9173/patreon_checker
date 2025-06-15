@@ -55,8 +55,8 @@ app.get('/callback', async (req, res) => {
 
     const memberships = userRes.data.included || [];
     const userTierIds = memberships
-      .filter(item => item.type === 'tier')
-      .map(tier => tier.id);
+      .filter(item => item.type === 'membership' && item.relationships?.currently_entitled_tiers?.data)
+      .flatMap(item => item.relationships.currently_entitled_tiers.data.map(tier => tier.id));
 
     console.log('User tier IDs:', userTierIds);
     console.log('Allowed tier IDs:', allowedTierIds);
@@ -64,7 +64,7 @@ app.get('/callback', async (req, res) => {
     const matched = userTierIds.some(id => allowedTierIds.includes(id));
 
     if (matched) {
-      res.redirect('https://your-success-url.com'); // ✅ Replace with your real success URL
+      res.redirect(REDIRECT_URI); // ✅ Redirect to the specified URI
     } else {
       res.status(403).send('❌ Access denied: You are not subscribed to the required tier.');
     }
