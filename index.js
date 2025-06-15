@@ -46,7 +46,7 @@ app.get('/callback', async (req, res) => {
     const hasTier = memberships.some(item => item.type === 'tier' && item.id === REQUIRED_TIER_ID);
 
     if (hasTier) {
-      res.redirect('https://docs.google.com/document/d/1LlZ-4q2Nn0u1fts8Cc5_fPln_p-_PRWQB83GIhVXYS4/edit?usp=sharing'); // Change to your success URL
+      res.redirect(REDIRECT_URI); // Change to your success URL
     } else {
       res.send('❌ You are not subscribed to the required tier.');
     }
