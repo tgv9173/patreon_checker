@@ -37,36 +37,41 @@ app.get('/callback', async (req, res) => {
 
     const accessToken = tokenRes.data.access_token;
 
-    // Fetch user identity + memberships
+    // Fetch identity + memberships
     const userRes = await axios.get(
-      'https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers&fields%5Bmember%5D=currently_entitled_tiers',
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      'https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers,memberships&fields%5Bmember%5D=currently_entitled_tiers',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
     );
 
-    // Dump response for debugging (optional)
+    // DEBUG: show what we got
     console.log(JSON.stringify(userRes.data, null, 2));
 
-    // Parse allowed tier IDs from env
-    const allowedTierIds = (process.env.ALLOWED_TIER_IDS || '').split(',').map(id => id.trim());
+    const allowedTierIds = (process.env.ALLOWED_TIER_IDS || '')
+      .split(',')
+      .map(id => id.trim())
+      .filter(id => id); // remove empty strings
 
-    // Extract user's entitled tier IDs
     const memberships = userRes.data.included || [];
     const userTierIds = memberships
       .filter(item => item.type === 'tier')
       .map(tier => tier.id);
 
-    // Check for intersection
+    console.log('User tier IDs:', userTierIds);
+    console.log('Allowed tier IDs:', allowedTierIds);
+
     const matched = userTierIds.some(id => allowedTierIds.includes(id));
 
     if (matched) {
-      res.redirect('https://your-success-url.com'); // Replace with your actual success URL
+      res.redirect('https://your-success-url.com'); // ✅ Replace with your real success URL
     } else {
-      res.send('❌ You are not subscribed to any of the required Patreon tiers.');
+      res.status(403).send('❌ Access denied: You are not subscribed to the required tier.');
     }
 
   } catch (err) {
-    console.error(err.response ? err.response.data : err);
-    res.send('⚠️ An error occurred during authentication.');
+    console.error('Error:', err.response ? err.response.data : err);
+    res.status(500).send('⚠️ An error occurred during authentication.');
   }
 });
 
