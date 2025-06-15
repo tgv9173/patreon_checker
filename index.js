@@ -38,16 +38,31 @@ app.get('/callback', async (req, res) => {
     const accessToken = tokenRes.data.access_token;
 
     // Fetch user identity + memberships
-    const userRes = await axios.get('https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers&fields%5Bmember%5D=currently_entitled_tiers', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    });
+    const userRes = await axios.get(
+      'https://www.patreon.com/api/oauth2/v2/identity?include=memberships.currently_entitled_tiers&fields%5Bmember%5D=currently_entitled_tiers',
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
-    // Dump full JSON for inspection
-    console.log(JSON.stringify(userRes.data, null, 2)); // Log to server
-    res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify(userRes.data, null, 2)); // Display in browser
+    // Dump response for debugging (optional)
+    console.log(JSON.stringify(userRes.data, null, 2));
+
+    // Parse allowed tier IDs from env
+    const allowedTierIds = (process.env.ALLOWED_TIER_IDS || '').split(',').map(id => id.trim());
+
+    // Extract user's entitled tier IDs
+    const memberships = userRes.data.included || [];
+    const userTierIds = memberships
+      .filter(item => item.type === 'tier')
+      .map(tier => tier.id);
+
+    // Check for intersection
+    const matched = userTierIds.some(id => allowedTierIds.includes(id));
+
+    if (matched) {
+      res.redirect('https://your-success-url.com'); // Replace with your actual success URL
+    } else {
+      res.send('❌ You are not subscribed to any of the required Patreon tiers.');
+    }
 
   } catch (err) {
     console.error(err.response ? err.response.data : err);
