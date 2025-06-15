@@ -55,8 +55,9 @@ app.get('/callback', async (req, res) => {
     const memberships = userRes.data.included || [];
     console.log('Memberships:', memberships);
 
+    // Correctly extract tier IDs from the 'member' type
     const userTierIds = memberships
-      .filter(item => item.type === 'membership' && item.relationships?.currently_entitled_tiers?.data)
+      .filter(item => item.type === 'member' && item.relationships?.currently_entitled_tiers?.data)
       .flatMap(item => item.relationships.currently_entitled_tiers.data.map(tier => tier.id));
 
     console.log('User tier IDs:', userTierIds);
