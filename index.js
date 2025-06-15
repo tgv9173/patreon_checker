@@ -6,7 +6,7 @@ const app = express();
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/success'; // Fallback value
+const REDIRECT_URI = process.env.REDIRECT_URI; // Fallback value
 const ALLOWED_TIER_IDS = process.env.ALLOWED_TIER_IDS; // Your Patreon tier ID
 
 app.get('/', (req, res) => {
@@ -18,7 +18,7 @@ app.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
     client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI, // Ensure this is included
+    redirect_uri: 'https://patreon-checker.onrender.com/callback', // Ensure this is included
     scope: 'identity identity.memberships'
   });
   res.redirect(`https://www.patreon.com/oauth2/authorize?${params}`);
