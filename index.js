@@ -25,6 +25,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/callback', async (req, res) => {
+  console.log('test callback');
   const code = req.query.code;
   console.log('Redirect URI:', REDIRECT_URI); // Debugging log
   try {
