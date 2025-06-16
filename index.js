@@ -45,23 +45,17 @@ app.get('/callback', async (req, res) => {
       }
     );
 
-    console.log('Patreon API Response:', JSON.stringify(userRes.data, null, 2));
-
     const allowedTierIds = (process.env.ALLOWED_TIER_IDS || '')
       .split(',')
       .map(id => id.trim())
       .filter(id => id); // remove empty strings
 
     const memberships = userRes.data.included || [];
-    console.log('Memberships:', memberships);
 
     // Correctly extract tier IDs from the 'member' type
     const userTierIds = memberships
       .filter(item => item.type === 'member' && item.relationships?.currently_entitled_tiers?.data)
       .flatMap(item => item.relationships.currently_entitled_tiers.data.map(tier => tier.id));
-
-    console.log('User tier IDs:', userTierIds);
-    console.log('Allowed tier IDs:', allowedTierIds);
 
     const matched = userTierIds.some(id => allowedTierIds.includes(id));
 
