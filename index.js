@@ -11,13 +11,6 @@ const REDIRECT_URI = 'https://patreon-checker.onrender.com/callback'; // Ensure 
 const ALLOWED_TIER_IDS = process.env.ALLOWED_TIER_IDS; // Your Patreon tier ID
 const SUCCESS_REDIRECT_URI = process.env.SUCCESS_REDIRECT_URI; // Link to redirect if tier matches
 
-// Middleware to log referer for every request
-app.use((req, res, next) => {
-  const referer = req.get('Referer') || 'No referer';
-  console.log(`[${req.method}] ${req.originalUrl} - Referer: ${referer}`);
-  next();
-});
-
 // Store referer from /login in a cookie
 app.use(cookieParser());
 
