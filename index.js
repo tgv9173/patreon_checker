@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const querystring = require('querystring');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -17,12 +18,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Store referer from /login in a cookie
+app.use(cookieParser());
+
 app.get('/', (req, res) => {
   res.send('<a href="/login">Login with Patreon</a>');
 });
 
 app.get('/login', (req, res) => {
-  // Referer is already logged by the middleware above
+  const referer = req.get('Referer') || 'No referer';
+  res.cookie('login_referer', referer, { httpOnly: true, sameSite: 'lax' });
   const params = querystring.stringify({
     response_type: 'code',
     client_id: CLIENT_ID,
@@ -34,6 +39,8 @@ app.get('/login', (req, res) => {
 
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
+  // Get referer from cookie set in /login
+  const loginReferer = req.cookies.login_referer || 'No referer';
   try {
     const tokenRes = await axios.post('https://www.patreon.com/api/oauth2/token', querystring.stringify({
       code,
@@ -56,11 +63,9 @@ app.get('/callback', async (req, res) => {
     const allowedTierIds = (process.env.ALLOWED_TIER_IDS || '')
       .split(',')
       .map(id => id.trim())
-      .filter(id => id); // remove empty strings
+      .filter(id => id);
 
     const memberships = userRes.data.included || [];
-
-    // Correctly extract tier IDs from the 'member' type
     const userTierIds = memberships
       .filter(item => item.type === 'member' && item.relationships?.currently_entitled_tiers?.data)
       .flatMap(item => item.relationships.currently_entitled_tiers.data.map(tier => tier.id));
@@ -68,14 +73,20 @@ app.get('/callback', async (req, res) => {
     const matched = userTierIds.some(id => allowedTierIds.includes(id));
 
     if (matched) {
-      res.redirect(SUCCESS_REDIRECT_URI); // ✅ Redirect to the success link
+      res.clearCookie('login_referer');
+      res.redirect(SUCCESS_REDIRECT_URI);
     } else {
+      console.error('Access denied: Not subscribed to required tier.');
+      console.error('Referer from /login on access denial:', loginReferer);
+      res.clearCookie('login_referer');
       res.status(403).send('❌ Access denied: You are not subscribed to the required tier.');
-      return; // Ensure no further execution
+      return;
     }
 
   } catch (err) {
-    console.error('Error:', err.response ? err.response.data : err);
+    console.error('OAuth error:', err.response ? err.response.data : err);
+    console.error('Referer from /login on OAuth failure:', loginReferer);
+    res.clearCookie('login_referer');
     res.status(500).send('⚠️ An error occurred during authentication.');
   }
 });
